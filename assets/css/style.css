@@ -1,0 +1,15 @@
+/* Legacy stylesheet kept under assets for reference. Tailwind utilities now drive the UI. */
+:root {
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --bg-body: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --radius: 12px;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}

@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/../config/session.php';
+require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -115,9 +116,7 @@ try {
     $idTransaksi = (int) $insertTransaksi->insert_id;
     $insertTransaksi->close();
 
-    $insertDetail = $koneksi->prepare(
-        'INSERT INTO detail_transaksi (id_transaksi, id, jumlah, harga_satuan, subtotal) VALUES (?, ?, ?, ?, ?)'
-    );
+    $insertDetail = $koneksi->prepare('INSERT INTO detail_transaksi (id_transaksi, id, jumlah, harga_satuan, subtotal) VALUES (?, ?, ?, ?, ?)');
     if (!$insertDetail) {
         throw new RuntimeException('Gagal menyiapkan detail transaksi: ' . $koneksi->error);
     }
@@ -133,14 +132,7 @@ try {
         $hargaSatuan = $detail['harga_satuan'];
         $subtotal = $detail['subtotal'];
 
-        $insertDetail->bind_param(
-            'iiidd',
-            $transaksiId,
-            $barangId,
-            $jumlah,
-            $hargaSatuan,
-            $subtotal
-        );
+        $insertDetail->bind_param('iiidd', $transaksiId, $barangId, $jumlah, $hargaSatuan, $subtotal);
 
         if (!$insertDetail->execute()) {
             throw new RuntimeException('Gagal menyimpan detail transaksi: ' . $insertDetail->error);

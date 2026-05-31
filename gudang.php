@@ -1,17 +1,8 @@
 <?php
-session_start();
-
-if (empty($_SESSION['username'])) {
-    header('Location: index.php');
-    exit;
-}
-
-require_once __DIR__ . '/database.php';
-
-function h($value)
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
+require_once __DIR__ . '/config/session.php';
+require_login('index.php');
+require_once __DIR__ . '/includes/helpers.php';
+require_once __DIR__ . '/config/database.php';
 
 $stats = [
     'total_barang' => 0,
@@ -32,92 +23,75 @@ if ($statResult) {
 
 $barangResult = $koneksi->query(
     'SELECT b.id, b.nama_barang, b.kategori, b.harga, b.stok, g.nama_gudang, g.lokasi
-     FROM barang b
-     INNER JOIN gudang g ON g.id_gudang = b.id_gudang
-     ORDER BY b.nama_barang ASC'
+	 FROM barang b
+	 INNER JOIN gudang g ON g.id_gudang = b.id_gudang
+	 ORDER BY b.nama_barang ASC'
 );
+
+$pageTitle = 'Gudang - Stok';
+$bodyClass = 'min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-800';
+$activePage = 'gudang';
+$pageScripts = ['assets/js/app.js'];
+require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/navbar.php';
 ?>
-<!DOCTYPE html>
-<html lang="id">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gudang - Stok</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
-</head>
-
-<body>
-    <header>
-        <div class="nav-container">
-            <div class="logo">📦 Gudang Stok</div>
-            <nav class="nav-links">
-                <a href="kasir.php" class="nav-item">Kasir</a>
-                <a href="gudang.php" class="nav-item active">Gudang</a>
-                <button onclick="logout()" class="nav-item" style="border:none; background:none; cursor:pointer;">Keluar</button>
-            </nav>
+<main class="mx-auto max-w-7xl space-y-6 px-4 py-6">
+    <div class="grid gap-4 md:grid-cols-3">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="text-sm text-slate-500">Total Barang</div>
+            <div id="statSKU" class="mt-1 text-2xl font-extrabold tracking-tight text-indigo-600"><?= h($stats['total_barang'] ?? 0) ?></div>
         </div>
-    </header>
-
-    <main>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Barang</div>
-                <div id="statSKU" class="stat-value"><?= h($stats['total_barang'] ?? 0) ?></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Unit</div>
-                <div id="statUnits" class="stat-value"><?= h($stats['total_unit'] ?? 0) ?></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Nilai Aset</div>
-                <div id="statValue" class="stat-value">Rp <?= number_format((float) ($stats['nilai_aset'] ?? 0), 0, ',', '.') ?></div>
-            </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="text-sm text-slate-500">Total Unit</div>
+            <div id="statUnits" class="mt-1 text-2xl font-extrabold tracking-tight text-indigo-600"><?= h($stats['total_unit'] ?? 0) ?></div>
         </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="text-sm text-slate-500">Nilai Aset</div>
+            <div id="statValue" class="mt-1 text-2xl font-extrabold tracking-tight text-indigo-600">Rp <?= number_format((float) ($stats['nilai_aset'] ?? 0), 0, ',', '.') ?></div>
+        </div>
+    </div>
 
-        <div class="card table-container">
-            <table>
-                <thead>
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-left">
+                <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                     <tr>
-                        <th>Nama Barang</th>
-                        <th>Kategori</th>
-                        <th>Gudang</th>
-                        <th style="text-align: right;">Harga</th>
-                        <th style="text-align: center;">Stok</th>
-                        <th style="text-align: right;">Aksi</th>
+                        <th class="px-4 py-3 font-semibold">Nama Barang</th>
+                        <th class="px-4 py-3 font-semibold">Kategori</th>
+                        <th class="px-4 py-3 font-semibold">Gudang</th>
+                        <th class="px-4 py-3 text-right font-semibold">Harga</th>
+                        <th class="px-4 py-3 text-center font-semibold">Stok</th>
+                        <th class="px-4 py-3 text-right font-semibold">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-slate-100">
                     <?php if ($barangResult && $barangResult->num_rows > 0): ?>
                         <?php while ($barang = $barangResult->fetch_assoc()): ?>
-                            <tr data-barang-row="<?= h($barang['id']) ?>">
-                                <td style="font-weight:700"><?= h($barang['nama_barang']) ?></td>
-                                <td><span class="badge"><?= h($barang['kategori']) ?></span></td>
-                                <td>
-                                    <?= h($barang['nama_gudang']) ?><br>
-                                    <small style="color: var(--text-muted);"><?= h($barang['lokasi']) ?></small>
+                            <?php $stockBadgeClass = ((int) $barang['stok'] <= 10) ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'; ?>
+                            <tr data-barang-row="<?= h($barang['id']) ?>" class="hover:bg-slate-50/80">
+                                <td class="px-4 py-4 font-semibold text-slate-900"><?= h($barang['nama_barang']) ?></td>
+                                <td class="px-4 py-4"><span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500"><?= h($barang['kategori']) ?></span></td>
+                                <td class="px-4 py-4 text-sm text-slate-700">
+                                    <div class="font-medium text-slate-900"><?= h($barang['nama_gudang']) ?></div>
+                                    <div class="text-slate-500"><?= h($barang['lokasi']) ?></div>
                                 </td>
-                                <td style="text-align:right">Rp <?= number_format((float) $barang['harga'], 0, ',', '.') ?></td>
-                                <td style="text-align:center">
-                                    <span data-stock-badge class="stock-badge <?= ((int) $barang['stok'] <= 10) ? 'stock-low' : 'stock-ok' ?>"><?= h($barang['stok']) ?> pcs</span>
+                                <td class="px-4 py-4 text-right font-semibold text-slate-700">Rp <?= number_format((float) $barang['harga'], 0, ',', '.') ?></td>
+                                <td class="px-4 py-4 text-center">
+                                    <span data-stock-badge class="inline-flex rounded-full px-3 py-1 text-xs font-semibold <?= $stockBadgeClass ?>"><?= h($barang['stok']) ?> pcs</span>
                                 </td>
-                                <td style="text-align:right">
-                                    <button type="button" class="btn-primary" style="width:auto; padding: 8px 12px;" onclick="addStock(<?= (int) $barang['id'] ?>)">+ Stok</button>
+                                <td class="px-4 py-4 text-right">
+                                    <button type="button" class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700" onclick="addStock(<?= (int) $barang['id'] ?>)">+ Stok</button>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="6" style="text-align:center; color: var(--text-muted);">Belum ada data barang.</td>
+                            <td colspan="6" class="px-4 py-10 text-center text-sm text-slate-500">Belum ada data barang.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
-    </main>
-
-    <script src="app.js"></script>
-</body>
-
-</html>
+    </div>
+</main>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>
