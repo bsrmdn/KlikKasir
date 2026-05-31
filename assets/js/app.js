@@ -18,6 +18,24 @@ document.addEventListener("DOMContentLoaded", () => {
       updateCartQty(Number(actionButton.dataset.productId || 0), actionButton.dataset.cartAction);
     });
 
+    cartItems.addEventListener("change", (event) => {
+      const quantityInput = event.target.closest("[data-cart-qty-input]");
+      if (!quantityInput) return;
+
+      commitCartQty(Number(quantityInput.dataset.productId || 0), quantityInput.value);
+    });
+
+    cartItems.addEventListener("keydown", (event) => {
+      const quantityInput = event.target.closest("[data-cart-qty-input]");
+      if (!quantityInput) return;
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+        commitCartQty(Number(quantityInput.dataset.productId || 0), quantityInput.value);
+        quantityInput.blur();
+      }
+    });
+
     updateCartUI();
   }
   
@@ -76,23 +94,26 @@ function updateCartUI() {
     container.innerHTML = cart
       .map((item) => {
         return `
-          <div class="mb-3 flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div class="mb-3 flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
             <div class="min-w-0 flex-1">
               <div class="truncate text-sm font-semibold text-slate-900">${item.name}</div>
               <div class="mt-1 text-xs text-slate-500">Rp ${item.price.toLocaleString("id-ID")} / pcs</div>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="inline-flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                <button type="button" data-cart-action="decrease" data-product-id="${item.id}" class="inline-flex h-9 w-9 items-center justify-center text-slate-600 transition hover:bg-slate-100 hover:text-slate-900" aria-label="Kurangi jumlah ${item.name}">
-                  <i data-lucide="minus" class="h-4 w-4"></i>
-                </button>
-                <input type="number" value="${item.qty}" readonly class="h-9 w-12 border-x border-slate-200 bg-slate-50 text-center text-sm font-semibold text-slate-900 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" aria-label="Jumlah ${item.name}">
-                <button type="button" data-cart-action="increase" data-product-id="${item.id}" class="inline-flex h-9 w-9 items-center justify-center text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-700" aria-label="Tambah jumlah ${item.name}">
-                  <i data-lucide="plus" class="h-4 w-4"></i>
-                </button>
+
+              <div class="mt-3 flex items-center gap-3">
+                <input type="number" min="0" step="1" value="${item.qty}" data-cart-qty-input data-product-id="${item.id}" class="h-10 w-24 rounded-xl border border-slate-200 bg-white px-3 text-center text-sm font-semibold text-slate-900 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" aria-label="Jumlah ${item.name}">
+
+                <div class="inline-flex items-center rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <button type="button" data-cart-action="decrease" data-product-id="${item.id}" class="inline-flex h-9 w-10 items-center justify-center text-slate-600 transition hover:bg-slate-100 hover:text-slate-900" aria-label="Kurangi jumlah ${item.name}">
+                    <i data-lucide="minus" class="h-4 w-4"></i>
+                  </button>
+                  <button type="button" data-cart-action="increase" data-product-id="${item.id}" class="inline-flex h-9 w-10 items-center justify-center border-l border-slate-200 text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-700" aria-label="Tambah jumlah ${item.name}">
+                    <i data-lucide="plus" class="h-4 w-4"></i>
+                  </button>
+                </div>
               </div>
-              <div class="min-w-24 text-right text-sm font-semibold text-slate-900">Rp ${(item.price * item.qty).toLocaleString("id-ID")}</div>
             </div>
+
+            <div class="min-w-24 text-right text-sm font-semibold text-slate-900">Rp ${(item.price * item.qty).toLocaleString("id-ID")}</div>
           </div>`;
       })
       .join("");
@@ -130,6 +151,28 @@ function updateCartQty(productId, action) {
       updateCartUI();
       return;
     }
+  }
+
+  updateCartUI();
+}
+
+function commitCartQty(productId, rawValue) {
+  const itemIndex = cart.findIndex((item) => item.id === productId);
+  if (itemIndex === -1) return;
+
+  const parsedQty = Number(rawValue);
+  if (!Number.isInteger(parsedQty) || parsedQty < 0) {
+    updateCartUI();
+    return;
+  }
+
+  const item = cart[itemIndex];
+  const nextQty = Math.min(parsedQty, item.stock);
+
+  if (nextQty <= 0) {
+    cart.splice(itemIndex, 1);
+  } else {
+    item.qty = nextQty;
   }
 
   updateCartUI();

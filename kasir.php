@@ -45,16 +45,28 @@ require_once __DIR__ . '/includes/navbar.php';
     </section>
 
     <aside class="lg:sticky lg:top-24 lg:self-start">
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="mb-4 text-lg font-bold text-slate-900">Keranjang</h3>
-            <div id="cartItems" class="min-h-48 text-sm"></div>
-            <hr class="my-4 border-slate-200">
-            <div class="flex items-center justify-between text-xl font-extrabold text-slate-900">
-                <span>Total</span>
-                <span id="totalPrice">Rp 0</span>
+        <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-900/5">
+            <div class="border-b border-slate-200 bg-slate-50/80 px-5 py-4">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-extrabold tracking-tight text-slate-900">Keranjang</h3>
+                        <p class="mt-1 text-sm text-slate-500">Atur quantity dengan tombol minus dan plus.</p>
+                    </div>
+                </div>
             </div>
-            <input type="number" id="cashAmount" class="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100" placeholder="Uang Bayar">
-            <button id="btnPay" class="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-700 hover:shadow-indigo-500/30 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50" disabled onclick="processPayment()">BAYAR SEKARANG</button>
+
+            <div class="space-y-4 p-5">
+                <div id="cartItems" class="space-y-3 rounded-2xl bg-slate-50 p-3"></div>
+
+                <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div class="flex items-center justify-between text-xl font-extrabold tracking-tight text-slate-900">
+                        <span>Total</span>
+                        <span id="totalPrice">Rp 0</span>
+                    </div>
+                    <input type="number" id="cashAmount" class="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100" placeholder="Uang Bayar">
+                    <button id="btnPay" class="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-700 hover:shadow-indigo-500/30 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50" disabled onclick="processPayment()">BAYAR SEKARANG</button>
+                </div>
+            </div>
         </div>
     </aside>
 </main>
