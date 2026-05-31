@@ -20,17 +20,6 @@ $error = isset($_GET['error']) ? (string) $_GET['error'] : '';
 </head>
 
 <body class="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 px-4 text-slate-800 flex items-center justify-center">
-    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white/90 p-8 shadow-xl shadow-slate-200/70 backdrop-blur">
-        <div class="mb-8 text-center">
-            <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/30">
-                <i data-lucide="shopping-bag"></i>
-            </div>
-            <h2 class="text-2xl font-extrabold tracking-tight text-slate-900">Selamat Datang</h2>
-            <p class="mt-2 text-sm text-slate-500">
-                Silakan masuk ke akun kasir Anda
-            </p>
-        </div>
-
         <?php
         require_once __DIR__ . '/config/session.php';
         require_once __DIR__ . '/includes/helpers.php';
