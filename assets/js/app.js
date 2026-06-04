@@ -336,7 +336,6 @@ function processPayment() {
       payload.data.items.forEach((item) => {
         const card = document.querySelector(`[data-product-card][data-id="${item.id}"]`);
         if (!card) return;
-
         card.dataset.stock = String(item.stock);
         const stockBadge = card.querySelector("[data-stock-badge]");
         if (stockBadge) stockBadge.textContent = item.stock;
@@ -348,11 +347,39 @@ function processPayment() {
       if (cashInput) cashInput.value = "";
       updateCartUI();
 
-      alert(`Pembayaran Berhasil! Kembalian: Rp ${payload.data.kembalian.toLocaleString("id-ID")}`);
+      // Tampilkan modal sukses
+      showSuksesModal(payload.data);
     })
     .catch((error) => {
       alert(error.message || "Gagal memproses pembayaran.");
     });
+}
+
+function showSuksesModal(data) {
+  const modal = document.getElementById("modalSukses");
+  if (!modal) {
+    alert(`Pembayaran Berhasil! Kembalian: Rp ${data.kembalian.toLocaleString("id-ID")}`);
+    return;
+  }
+
+  const fmt = (n) => `Rp ${Number(n).toLocaleString("id-ID")}`;
+  document.getElementById("sukses_id_trx").textContent    = `#${data.id_transaksi}`;
+  document.getElementById("sukses_total").textContent     = fmt(data.total_harga);
+  document.getElementById("sukses_bayar").textContent     = fmt(data.uang_bayar);
+  document.getElementById("sukses_kembalian").textContent = fmt(data.kembalian);
+
+  const btnNota = document.getElementById("btnCetakNota");
+  if (btnNota) btnNota.href = `process/cetak_nota.php?id=${data.id_transaksi}`;
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
+function closeSuksesModal() {
+  const modal = document.getElementById("modalSukses");
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
 }
 
 function showDetail(idTransaksi) {

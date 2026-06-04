@@ -4,6 +4,23 @@ CREATE DATABASE IF NOT EXISTS kasir_penjualan
 
 USE kasir_penjualan;
 
+-- Tabel Users (Login & Role)
+CREATE TABLE IF NOT EXISTS users (
+  id_user INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nama VARCHAR(100) NOT NULL,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  role ENUM('admin','kasir') NOT NULL DEFAULT 'kasir',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Seed users: jalankan setup_users.php sekali untuk generate hash yang benar
+-- admin: admin123 | kasir1: kasir123
+INSERT INTO users (nama, username, password, role) VALUES
+  ('Administrator','admin','$2y$10$placeholder_run_setup_users','admin'),
+  ('Kasir Utama','kasir1','$2y$10$placeholder_run_setup_users','kasir')
+ON DUPLICATE KEY UPDATE nama = VALUES(nama);
+
 CREATE TABLE IF NOT EXISTS gudang (
   id_gudang INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   nama_gudang VARCHAR(100) NOT NULL,
