@@ -16,6 +16,7 @@ $error = isset($_GET['error']) ? (string) $_GET['error'] : '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login — KlikKasir</title>
     <meta name="description" content="Halaman login sistem kasir toko KlikKasir. Masukkan username dan password untuk mengakses sistem." />
+    <link rel="icon" type="image/png" href="/klikkasir/KlikKasir/assets/favicon.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
