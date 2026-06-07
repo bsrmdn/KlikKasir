@@ -39,6 +39,7 @@ foreach ($users as $u) {
 <head>
   <meta charset="UTF-8">
   <title>Setup Users — KlikKasir</title>
+  <link rel="icon" type="image/png" href="/klikkasir/KlikKasir/assets/favicon.png" />
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-slate-100 flex items-center justify-center px-4">
