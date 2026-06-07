@@ -1,15 +1,33 @@
 <?php
+/**
+ * transaksi.php — Halaman Riwayat Transaksi
+ *
+ * Menampilkan daftar semua transaksi penjualan yang pernah terjadi,
+ * dengan kemampuan filter berdasarkan rentang tanggal.
+ *
+ * Fitur:
+ *   - Kartu ringkasan: total pendapatan & jumlah transaksi (sesuai filter)
+ *   - Filter tanggal: dari-sampai (menggunakan GET parameter)
+ *   - Tabel transaksi: ID, tanggal, total, bayar, kembalian, aksi
+ *   - Modal detail: menampilkan item per transaksi via Fetch API (app.js)
+ *   - Tombol cetak nota: link ke process/cetak_nota.php
+ *
+ * Akses: semua role yang sudah login
+ */
 require_once __DIR__ . '/config/session.php';
-require_login('index.php');
+require_login('index.php');  // Wajib login
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/config/database.php';
 
-// Filter tanggal
-$tglDari   = isset($_GET['tgl_dari']) && $_GET['tgl_dari'] !== '' ? (string) $_GET['tgl_dari'] : '';
+// ── Baca filter tanggal dari GET parameter ───────────────────────────────────────
+// String kosong berarti tidak ada filter yang aktif
+$tglDari   = isset($_GET['tgl_dari'])   && $_GET['tgl_dari']   !== '' ? (string) $_GET['tgl_dari']   : '';
 $tglSampai = isset($_GET['tgl_sampai']) && $_GET['tgl_sampai'] !== '' ? (string) $_GET['tgl_sampai'] : '';
 
-// Query summary (disesuaikan filter)
+// ── Query data sesuai kondisi filter ────────────────────────────────────────────
 if ($tglDari !== '' && $tglSampai !== '') {
+    // ── Mode filter aktif: gunakan prepared statement untuk keamanan ─────────────
+    // Query summary: hitung total dalam rentang tanggal yang dipilih
     $stmtSum = $koneksi->prepare(
         "SELECT COUNT(*) AS jumlah_transaksi, COALESCE(SUM(total_harga),0) AS total_pendapatan
          FROM transaksi WHERE DATE(tgl_transaksi) BETWEEN ? AND ?"
@@ -19,6 +37,7 @@ if ($tglDari !== '' && $tglSampai !== '') {
     $summaryData = $stmtSum->get_result()->fetch_assoc();
     $stmtSum->close();
 
+    // Query list: ambil semua transaksi dalam rentang tanggal
     $stmtTrx = $koneksi->prepare(
         "SELECT id_transaksi, tgl_transaksi, total_harga, uang_bayar
          FROM transaksi WHERE DATE(tgl_transaksi) BETWEEN ? AND ?
@@ -29,17 +48,20 @@ if ($tglDari !== '' && $tglSampai !== '') {
     $transaksiResult = $stmtTrx->get_result();
     $stmtTrx->close();
 } else {
-    $summaryData = $koneksi->query('SELECT COUNT(*) AS jumlah_transaksi, COALESCE(SUM(total_harga),0) AS total_pendapatan FROM transaksi')->fetch_assoc();
+    // ── Tanpa filter: tampilkan semua transaksi ─────────────────────────────
+    $summaryData     = $koneksi->query('SELECT COUNT(*) AS jumlah_transaksi, COALESCE(SUM(total_harga),0) AS total_pendapatan FROM transaksi')->fetch_assoc();
     $transaksiResult = $koneksi->query('SELECT id_transaksi, tgl_transaksi, total_harga, uang_bayar FROM transaksi ORDER BY tgl_transaksi DESC, id_transaksi DESC');
 }
 
+// Fallback ke nilai 0 jika query summary gagal
 $summary = ['jumlah_transaksi' => 0, 'total_pendapatan' => 0];
 if ($summaryData) $summary = $summaryData;
 
+// Konfigurasi halaman
 $pageTitle   = 'Riwayat Transaksi — KlikKasir';
 $bodyClass   = 'min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-800';
 $activePage  = 'transaksi';
-$pageScripts = ['assets/js/app.js'];
+$pageScripts = ['assets/js/app.js'];  // Load app.js untuk fungsi showDetail()
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 ?>

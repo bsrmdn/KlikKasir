@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS users (
 -- Seed users: jalankan setup_users.php sekali untuk generate hash yang benar
 -- admin: admin123 | kasir1: kasir123
 INSERT INTO users (nama, username, password, role) VALUES
-  ('Administrator','admin','$2y$10$placeholder_run_setup_users','admin'),
-  ('Kasir Utama','kasir1','$2y$10$placeholder_run_setup_users','kasir')
+  ('Administrator','admin','admin123','admin'),
+  ('Kasir Utama','kasir1','kasir123','kasir')
 ON DUPLICATE KEY UPDATE nama = VALUES(nama);
 
 CREATE TABLE IF NOT EXISTS gudang (

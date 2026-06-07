@@ -1,11 +1,26 @@
 <?php
+/**
+ * index.php — Halaman Login KlikKasir
+ *
+ * Halaman ini adalah pintu masuk utama aplikasi.
+ * Menampilkan form login dan mengarahkan user yang sudah login ke dashboard.
+ *
+ * Alur:
+ *   1. Jika user sudah login (ada $_SESSION['username']) → redirect ke dashboard
+ *   2. Jika ada parameter ?error=1 → tampilkan pesan error login gagal
+ *   3. Tampilkan form login yang memposting ke process/login_process.php
+ */
 session_start();
 
+// Jika user sudah memiliki sesi aktif, redirect langsung ke dashboard
+// (mencegah akses halaman login setelah sudah masuk)
 if (!empty($_SESSION['username'])) {
     header('Location: dashboard.php');
     exit;
 }
 
+// Cek apakah ada kode error dari login_process.php
+// error=1 berarti username/password salah
 $error = isset($_GET['error']) ? (string) $_GET['error'] : '';
 ?>
 <!doctype html>

@@ -1,37 +1,56 @@
 <?php
+/**
+ * dashboard.php — Halaman Dashboard Utama KlikKasir
+ *
+ * Menampilkan ringkasan statistik toko dan 5 transaksi terbaru.
+ * Dapat diakses oleh semua role (admin dan kasir), namun quick actions
+ * yang ditampilkan berbeda berdasarkan role.
+ *
+ * Data yang ditampilkan:
+ *   - Jumlah jenis barang & total unit stok
+ *   - Jumlah transaksi & total pendapatan kotor
+ *   - 5 transaksi terbaru (ID, tanggal, total)
+ */
 require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/config/database.php';
+
+// Wajib login; redirect ke index.php jika belum
 require_login('index.php');
 
-// Ambil statistik dashboard
-$statBarang  = 0;
-$statStok    = 0;
-$statTrx     = 0;
-$statPendapatan = 0;
+// ── Ambil statistik dashboard ───────────────────────────────────────────────────────
+$statBarang     = 0;  // Jumlah jenis barang (SKU)
+$statStok       = 0;  // Total unit stok semua barang
+$statTrx        = 0;  // Jumlah transaksi yang pernah terjadi
+$statPendapatan = 0;  // Total pendapatan kotor (sum total_harga)
 
+// Query 1: Hitung jumlah barang dan total unit stok
 $r1 = $koneksi->query('SELECT COUNT(*) AS c, COALESCE(SUM(stok),0) AS s FROM barang');
 if ($r1 && $d = $r1->fetch_assoc()) {
     $statBarang = (int) $d['c'];
     $statStok   = (int) $d['s'];
 }
+
+// Query 2: Hitung jumlah transaksi dan total pendapatan
 $r2 = $koneksi->query('SELECT COUNT(*) AS c, COALESCE(SUM(total_harga),0) AS p FROM transaksi');
 if ($r2 && $d = $r2->fetch_assoc()) {
     $statTrx        = (int) $d['c'];
     $statPendapatan = (float) $d['p'];
 }
 
-// Transaksi terbaru (5 baris)
+// Query 3: Ambil 5 transaksi terbaru untuk ditampilkan di tabel
 $recentTrx = $koneksi->query(
     'SELECT id_transaksi, tgl_transaksi, total_harga, uang_bayar FROM transaksi ORDER BY tgl_transaksi DESC LIMIT 5'
 );
 
+// Konfigurasi halaman (digunakan oleh header.php dan navbar.php)
 $pageTitle  = 'Dashboard — KlikKasir';
 $bodyClass  = 'min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-800';
 $activePage = 'dashboard';
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 
+// Cek apakah ada pesan akses ditolak (dari require_role redirect)
 $aksesMsg = isset($_GET['akses']) && $_GET['akses'] === 'ditolak';
 ?>
 <main class="mx-auto max-w-7xl space-y-8 px-4 py-8">

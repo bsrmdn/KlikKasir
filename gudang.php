@@ -1,12 +1,30 @@
 <?php
+/**
+ * gudang.php — Halaman Manajemen Gudang & Barang
+ *
+ * Menampilkan daftar barang dan gudang, serta memungkinkan operasi CRUD.
+ * Semua role bisa melihat data dan mengupdate stok.
+ * Operasi tambah/edit/hapus barang & gudang hanya untuk admin.
+ *
+ * Fitur berdasarkan role:
+ *   Admin:  CRUD barang, CRUD gudang, update stok
+ *   Kasir:  hanya update stok (modal + Stok)
+ *
+ * Aksi dikirim ke:
+ *   - process/barang_action.php  (POST form untuk CRUD barang)
+ *   - process/gudang_action.php  (POST form untuk CRUD gudang)
+ *   - process/update_stock_action.php (Fetch API JSON untuk update stok)
+ */
 require_once __DIR__ . '/config/session.php';
-require_login('index.php');
+require_login('index.php');  // Wajib login
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/config/database.php';
 
+// Cek apakah user adalah admin (mengontrol visibilitas tombol aksi)
 $isAdmin = is_admin();
 
-// Edit data untuk modal (dari GET)
+// ── Pre-load data edit untuk modal (dari GET parameter) ───────────────────────
+// Jika URL mengandung ?edit_barang=X atau ?edit_gudang=X, ambil data untuk prefill form
 $editBarang = null;
 $editGudang = null;
 if ($isAdmin && isset($_GET['edit_barang'])) {
@@ -26,35 +44,38 @@ if ($isAdmin && isset($_GET['edit_gudang'])) {
     $s->close();
 }
 
-// Statistik
+// ── Statistik gudang ─────────────────────────────────────────────────────────────
 $stats = ['total_barang' => 0, 'total_unit' => 0, 'nilai_aset' => 0];
+// Hitung jumlah SKU, total unit stok, dan nilai aset (stok × harga per barang)
 $statResult = $koneksi->query('SELECT COUNT(*) AS total_barang, COALESCE(SUM(stok), 0) AS total_unit, COALESCE(SUM(stok * harga), 0) AS nilai_aset FROM barang');
 if ($statResult && $sd = $statResult->fetch_assoc()) {
     $stats = $sd;
 }
 
-// Daftar barang
+// ── Daftar barang (JOIN dengan gudang untuk nama gudang) ───────────────────────
 $barangResult = $koneksi->query(
     'SELECT b.id, b.nama_barang, b.kategori, b.harga, b.stok, g.id_gudang, g.nama_gudang, g.lokasi
      FROM barang b INNER JOIN gudang g ON g.id_gudang = b.id_gudang
      ORDER BY b.nama_barang ASC'
 );
 
-// Daftar gudang (untuk dropdown & tabel)
+// ── Semua gudang (untuk dropdown pilih gudang di form tambah/edit barang) ────────
 $gudangAll = [];
 $gr = $koneksi->query('SELECT id_gudang, nama_gudang, lokasi FROM gudang ORDER BY nama_gudang ASC');
 while ($g = $gr->fetch_assoc()) {
     $gudangAll[] = $g;
 }
 
+// Konfigurasi halaman
 $pageTitle  = 'Gudang — KlikKasir';
 $bodyClass  = 'min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-800';
 $activePage = 'gudang';
-$pageScripts = ['assets/js/app.js'];
+$pageScripts = ['assets/js/app.js'];  // Load app.js untuk modal stok
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 
-// Pesan feedback
+// ── Pesan feedback dari redirect POST/Redirect/GET pattern ───────────────────────
+// Setiap aksi (tambah/edit/hapus) redirect ke gudang.php?msg=kode_pesan
 $feedbackMsgs = [
     'tambah_barang_ok'  => ['type' => 'success', 'text' => 'Barang berhasil ditambahkan.'],
     'edit_barang_ok'    => ['type' => 'success', 'text' => 'Barang berhasil diperbarui.'],
@@ -62,10 +83,11 @@ $feedbackMsgs = [
     'tambah_gudang_ok'  => ['type' => 'success', 'text' => 'Gudang berhasil ditambahkan.'],
     'edit_gudang_ok'    => ['type' => 'success', 'text' => 'Gudang berhasil diperbarui.'],
     'hapus_gudang_ok'   => ['type' => 'success', 'text' => 'Gudang berhasil dihapus.'],
-    'gudang_ada_barang' => ['type' => 'error', 'text' => 'Gudang tidak dapat dihapus karena masih memiliki barang.'],
-    'error_barang'      => ['type' => 'error', 'text' => 'Terjadi kesalahan pada data barang.'],
-    'error_gudang'      => ['type' => 'error', 'text' => 'Terjadi kesalahan pada data gudang.'],
+    'gudang_ada_barang' => ['type' => 'error',   'text' => 'Gudang tidak dapat dihapus karena masih memiliki barang.'],
+    'error_barang'      => ['type' => 'error',   'text' => 'Terjadi kesalahan pada data barang.'],
+    'error_gudang'      => ['type' => 'error',   'text' => 'Terjadi kesalahan pada data gudang.'],
 ];
+// Ambil pesan yang sesuai berdasarkan parameter ?msg= (null jika tidak ada)
 $feedback = isset($_GET['msg']) ? ($feedbackMsgs[$_GET['msg']] ?? null) : null;
 ?>
 

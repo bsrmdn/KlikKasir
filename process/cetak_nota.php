@@ -1,22 +1,34 @@
 <?php
 /**
  * process/cetak_nota.php
- * Generate nota transaksi sebagai halaman print-friendly HTML.
- * Bisa dicetak langsung dari browser (Ctrl+P) atau disimpan sebagai PDF.
  *
- * Akses: process/cetak_nota.php?id=<id_transaksi>
+ * Menghasilkan halaman nota transaksi yang print-friendly (bisa dicetak langsung
+ * dari browser dengan Ctrl+P atau disimpan sebagai PDF).
+ *
+ * Halaman ini didesain menyerupai struk kasir fisik:
+ *   - Lebar 320px untuk simulasi kertas thermal printer
+ *   - @media print: hapus tombol, perlebar ke 100% halaman
+ *   - Font monospace untuk tampilan seperti struk asli
+ *
+ * Akses: GET process/cetak_nota.php?id=<id_transaksi>
+ *   - id (int): ID transaksi yang akan dicetak notanya
+ *
+ * Semua role yang sudah login dapat mengakses halaman ini.
  */
 require_once __DIR__ . '/../config/session.php';
+
+// Hanya user yang sudah login yang bisa cetak nota
 require_login('../index.php');
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
+// Ambil ID transaksi dari parameter URL
 $idTransaksi = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if ($idTransaksi <= 0) {
     die('ID transaksi tidak valid.');
 }
 
-// Ambil data transaksi
+// ── Query 1: Ambil data header transaksi ─────────────────────────────────────
 $stmtTrx = $koneksi->prepare(
     'SELECT id_transaksi, tgl_transaksi, total_harga, uang_bayar FROM transaksi WHERE id_transaksi = ? LIMIT 1'
 );
@@ -25,29 +37,32 @@ $stmtTrx->execute();
 $transaksi = $stmtTrx->get_result()->fetch_assoc();
 $stmtTrx->close();
 
+// Hentikan jika transaksi tidak ditemukan
 if (!$transaksi) {
     die('Transaksi tidak ditemukan.');
 }
 
-// Ambil detail item
+// ── Query 2: Ambil detail item transaksi (JOIN dengan tabel barang) ───────────
 $stmtDetail = $koneksi->prepare(
     'SELECT b.nama_barang, dt.jumlah AS qty, dt.harga_satuan, dt.subtotal
      FROM detail_transaksi dt
      INNER JOIN barang b ON b.id = dt.id
      WHERE dt.id_transaksi = ?
-     ORDER BY dt.id_detail ASC'
+     ORDER BY dt.id_detail ASC'  // Urutkan sesuai item ditambahkan ke transaksi
 );
 $stmtDetail->bind_param('i', $idTransaksi);
 $stmtDetail->execute();
 $detailResult = $stmtDetail->get_result();
 $stmtDetail->close();
 
+// Kumpulkan semua item ke array
 $items = [];
 while ($row = $detailResult->fetch_assoc()) {
     $items[] = $row;
 }
 
-$kembalian = (float)$transaksi['uang_bayar'] - (float)$transaksi['total_harga'];
+// Kalkulasi kembalian dan format tanggal untuk ditampilkan di nota
+$kembalian    = (float)$transaksi['uang_bayar'] - (float)$transaksi['total_harga'];
 $tglFormatted = date('d F Y, H:i', strtotime($transaksi['tgl_transaksi']));
 ?>
 <!doctype html>

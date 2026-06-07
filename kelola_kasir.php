@@ -1,14 +1,31 @@
 <?php
+/**
+ * kelola_kasir.php — Halaman Manajemen Akun Kasir
+ *
+ * Memungkinkan admin untuk menambah, mengedit, dan menghapus akun kasir.
+ * Hanya bisa diakses oleh user dengan role 'admin'.
+ *
+ * Mode tampilan:
+ *   - Mode tambah (default): form kosong di sisi kiri
+ *   - Mode edit (?aksi=edit&id=X): form terisi dengan data kasir yang dipilih
+ *
+ * Aksi dikirim ke process/kasir_action.php dengan field 'action' = tambah|edit|hapus
+ */
 require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/config/database.php';
-require_role('admin'); // Admin only
 
+// require_role('admin') otomatis redirect non-admin ke dashboard.php?akses=ditolak
+require_role('admin');
+
+// Baca aksi dari URL (untuk menentukan mode tampilan form)
 $aksi     = isset($_GET['aksi']) ? (string) $_GET['aksi'] : '';
-$editUser = null;
+$editUser = null;  // Data user yang akan diedit (null = mode tambah)
 
+// Mode edit: ambil data kasir yang dipilih untuk prefill form
 if ($aksi === 'edit' && isset($_GET['id'])) {
     $idEdit = (int) $_GET['id'];
+    // Hanya ambil user dengan role 'kasir' (admin tidak bisa diedit dari halaman ini)
     $stmt = $koneksi->prepare('SELECT id_user, nama, username, role FROM users WHERE id_user = ? AND role = "kasir" LIMIT 1');
     $stmt->bind_param('i', $idEdit);
     $stmt->execute();
@@ -16,15 +33,17 @@ if ($aksi === 'edit' && isset($_GET['id'])) {
     $stmt->close();
 }
 
-// Ambil daftar kasir
+// Ambil daftar semua kasir yang terdaftar (diurutkan terbaru di atas)
 $kasirList = $koneksi->query('SELECT id_user, nama, username, role, created_at FROM users WHERE role = "kasir" ORDER BY created_at DESC');
 
+// Konfigurasi halaman
 $pageTitle  = 'Kelola Kasir — KlikKasir';
 $bodyClass  = 'min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-800';
 $activePage = 'kelola_kasir';
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 
+// ── Pesan feedback dari redirect POST/Redirect/GET pattern ───────────────────────
 $msg = '';
 if (isset($_GET['msg'])) {
     $msgs = [

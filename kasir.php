@@ -1,20 +1,38 @@
 <?php
+/**
+ * kasir.php — Halaman Transaksi Penjualan
+ *
+ * Halaman utama kasir untuk membuat transaksi penjualan.
+ * Menampilkan grid produk yang bisa diklik untuk ditambahkan ke keranjang.
+ * Interaksi keranjang dan pembayaran ditangani oleh JavaScript (assets/js/app.js).
+ *
+ * Alur halaman:
+ *   1. Load semua barang dari database (JOIN dengan gudang)
+ *   2. Render kartu produk dengan data-* attributes (dikonsumsi oleh JavaScript)
+ *   3. JavaScript menangani: keranjang, pencarian, dan proses bayar (via Fetch API)
+ *
+ * Akses: semua role yang sudah login (admin dan kasir)
+ */
 require_once __DIR__ . '/config/session.php';
-require_login('index.php');
+require_login('index.php');  // Wajib login
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/config/database.php';
 
+// Query semua barang aktif beserta nama gudangnya
+// Data harga dan stok akan ditempatkan di data-* attribute kartu produk
+// dan dikonsumsi oleh addToCart() di JavaScript
 $barangResult = $koneksi->query(
     'SELECT b.id, b.nama_barang, b.kategori, b.harga, b.stok, g.nama_gudang
      FROM barang b
      INNER JOIN gudang g ON g.id_gudang = b.id_gudang
-     ORDER BY b.nama_barang ASC'
+     ORDER BY b.nama_barang ASC'  // Urut alfabetis agar mudah dicari
 );
 
+// Konfigurasi halaman
 $pageTitle   = 'Kasir — KlikKasir';
 $bodyClass   = 'min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-800';
 $activePage  = 'kasir';
-$pageScripts = ['assets/js/app.js'];
+$pageScripts = ['assets/js/app.js'];  // Load app.js untuk fungsionalitas keranjang
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 ?>
